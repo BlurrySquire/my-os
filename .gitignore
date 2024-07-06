@@ -1,6 +1,6 @@
-limine-efi
+/limine-efi
 
-.vscode
-bin
+/.vscode
+/bin
 disk.img
 OVMF.fd
