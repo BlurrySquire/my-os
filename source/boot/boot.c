@@ -3,16 +3,43 @@
 void UintToStr(UINTN integer, CHAR16* string);
 void IntToStr(INTN integer, CHAR16* string);
 
+void GetMemoryMap(EFI_SYSTEM_TABLE* SystemTable, EFI_MEMORY_DESCRIPTOR* memoryMap);
+
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
     /* Init console */
     SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
     SystemTable->ConOut->EnableCursor(SystemTable->ConOut, TRUE);
-
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Hello, UEFI!\r\n");
 
-    /* Get Memory Map */
-    UINTN memoryMapSize = 0;
+    CHAR16 test[16];
+    IntToStr(-123456, &test);
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, test);
+
     EFI_MEMORY_DESCRIPTOR* memoryMap;
+    GetMemoryMap(SystemTable, memoryMap);
+
+    CHAR16 string[64];
+    UintToStr(memoryMap->NumberOfPages, &string);
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, string);
+
+    /* Exit boot services before booting kernel */
+    SystemTable->BootServices->ExitBootServices(ImageHandle, 0);
+
+    while (TRUE) {
+        /* Hang the system. */
+    }
+
+    /*
+        Shouldn't reach here, but
+        if we do then just shutdown
+        the system.
+    */
+
+    SystemTable->RuntimeServices->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, L"\0");
+}
+
+void GetMemoryMap(EFI_SYSTEM_TABLE* SystemTable, EFI_MEMORY_DESCRIPTOR* memoryMap) {
+    UINTN memoryMapSize = 0;
     UINTN mapKey;
     UINTN descriptorSize;
     UINT32 descriptorVersion;
@@ -50,25 +77,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
         SystemTable->ConOut->OutputString(SystemTable->ConOut, L"\r\n");
     }
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Got the memory map.\r\n");
-
-    CHAR16 string[64];
-    UintToStr(memoryMap->NumberOfPages, &string);
-    SystemTable->ConOut->OutputString(SystemTable->ConOut, string);
-
-    /* Exit boot services before booting kernel */
-    SystemTable->BootServices->ExitBootServices(ImageHandle, 0);
-
-    while (TRUE) {
-        /* Hang the system. */
-    }
-
-    /* Shouldn't reach here, but
-       if we do then just shutdown
-       the system.
-    */
-
-    SystemTable->RuntimeServices->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, L"\0");
 }
+
 
 void UintToStr(UINTN integer, CHAR16* string) {
     UINTN index = 0;
@@ -90,26 +100,31 @@ void UintToStr(UINTN integer, CHAR16* string) {
         end--;
     }
 }
+
 /*
- void itoa(int n, char s[])
- {
-     int i, sign;
- 
-     if ((sign = n) < 0)  /* record sign 
-         n = -n;          /* make n positive 
-    
-     i = 0;
-
-     do {       /* generate digits in reverse order 
-         s[i++] = n % 10 + '0';   /* get next digit 
-     } while ((n /= 10) > 0);     /* delete it *
-
-     if (sign < 0)
-         s[i++] = '-';
-     s[i] = '\0';
-     reverse(s);
-/*} */
-
 void IntToStr(INTN integer, CHAR16* string) {
+    UINTN index = 0;
 
+    do {
+        string[index++] = integer % 10 + L'0';
+    } while ((integer /= 10) > 0);
+    string[index] = L'\0';                                          
+
+    UINTN start = 0;
+    UINTN end = index - 1;
+
+    if (integer < 0) {
+        string[index] = '-';
+        index++;
+    }
+
+    while (start < end) {
+        CHAR16 temp = string[start];
+        string[start] = string[end];
+        string[end] = temp;
+        
+        start++;
+        end--;
+    }
 }
+*/
