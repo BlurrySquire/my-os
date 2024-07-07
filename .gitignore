@@ -1,3 +1,5 @@
+image_root/boot/EFI/BOOT/BOOTX64.EFI
+
 /limine-efi
 
 /.vscode
