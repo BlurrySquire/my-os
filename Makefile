@@ -18,7 +18,7 @@ build_disk:
 	@./make_disk.sh
 
 run:
-	qemu-system-x86_64 --bios OVMF.fd -net none -m 1024 -M q35 --enable-kvm -drive format=raw,file=fat:rw:image_root/boot
+	qemu-system-x86_64 --bios OVMF.fd -net none -m 1024 -M q35 --enable-kvm -drive format=raw,file=disk.img
 
 clean:
 	rm -rf bin/*
