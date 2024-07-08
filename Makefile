@@ -5,12 +5,12 @@ SOURCE_DIR = source
 BUILD_DIR  = bin
 IMAGE_DIR  = image_root
 
-all: build_efi build_disk
+all: build_bootloader build_disk
 
-build_efi:
+build_bootloader:
 	@echo "Compiling EFI Bootloader..."
 	@mkdir -p $(BUILD_DIR)/boot $(BUILD_DIR)/EFI/BOOT
-	@$(MAKE) -C $(SOURCE_DIR)/boot all_efi
+	@$(MAKE) -C $(SOURCE_DIR)/boot all_bootloader
 
 build_disk:
 	@echo "Creating Disk Image..."

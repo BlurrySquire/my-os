@@ -19,7 +19,7 @@ LDFLAGS    = -nostdlib -pie -m elf_x86_64 \
 EFI_SOURCES := $(wildcard $(SOURCE_DIR)/*.c)
 EFI_OBJECTS := $(patsubst $(SOURCE_DIR)/%.c, $(BUILD_DIR)/boot/%.o, $(EFI_SOURCES))
 
-all_efi: $(BUILD_DIR)/EFI/BOOT/BOOTX64.EFI
+all_bootloader: $(BUILD_DIR)/EFI/BOOT/BOOTX64.EFI
 
 $(EFI_OBJECTS): $(EFI_SOURCES)
 	@echo "    Compiling $<..."
