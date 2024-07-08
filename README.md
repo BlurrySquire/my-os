@@ -17,7 +17,7 @@ sudo apt-get install qemu qemu-kvm qemu-system-x86
 ```
 
 ## Build Commands
-- ``make init``: This command initialises the build environment, by downloading the latest nightly [OVMF]() (UEFI firmware for qemu) and cloning the [limine-efi](https://github.com/limine-bootloader/limine-efi) repo.
+- ``make init``: This command initialises the build environment, by downloading the latest nightly [OVMF](https://retrage.github.io/edk2-nightly/bin/) (UEFI firmware for qemu) and cloning the [limine-efi](https://github.com/limine-bootloader/limine-efi) repo.
 
 - ``make clean``: This command clears the build directory. This is useful if you want to rebuild the code without making changes.
 
@@ -36,7 +36,7 @@ sudo apt-get install qemu qemu-kvm qemu-system-x86
 
 4. Run My-OS using ``make run``.
 
-5. If you only need to rebuild a part of My-OS you can use ``make build_<name_of_part>``. If you recompile a section, you will likely need to rebuild the disk image for changes to take effect. You can find a list of these options below.
+5. If you only need to rebuild a part of My-OS you can use ``make build_<name-of-part>``. If you recompile a section, you will likely need to rebuild the disk image for changes to take effect. You can find a list of these options below.
 
 ## Build Sections
 - ``build_bootloader``: Builds the bootloader.
