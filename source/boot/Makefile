@@ -10,18 +10,15 @@ CFLAGS     = -Wall -Wextra \
 			 -march=x86-64 -m64 -fshort-wchar -fPIE -ffreestanding \
 			 -fno-stack-protector -fno-stack-check -fno-strict-aliasing -fno-lto \
 			 -mno-80387 -mno-mmx -mno-sse -mno-sse2 -mno-red-zone \
-			 -I$(ROOT_DIR)/limine-efi/inc
+			 -I$(ROOT_DIR)/limine-efi/inc -I$(ROOT_DIR)/limine-efi/inc/x86_64
 
 LDFLAGS    = -nostdlib -pie -m elf_x86_64 \
 			 -z text -z max-page-size=0x1000 \
 			 -T $(ROOT_DIR)/limine-efi/gnuefi/elf_x86_64_efi.lds
 
-EFI_SOURCES := $(wildcard $(SOURCE_DIR)/*.c)
-EFI_OBJECTS := $(patsubst $(SOURCE_DIR)/%.c, $(BUILD_DIR)/boot/%.o, $(EFI_SOURCES))
-
 all_bootloader: $(BUILD_DIR)/EFI/BOOT/BOOTX64.EFI
 
-$(EFI_OBJECTS): $(EFI_SOURCES)
+$(BUILD_DIR)/boot/%.o: $(SOURCE_DIR)/%.c
 	@echo "    Compiling $<..."
 	@$(CC) $(CFLAGS) -c $< -o $@
 
