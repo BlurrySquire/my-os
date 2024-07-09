@@ -16,6 +16,9 @@ LDFLAGS    = -nostdlib -pie -m elf_x86_64 \
 			 -z text -z max-page-size=0x1000 \
 			 -T $(ROOT_DIR)/limine-efi/gnuefi/elf_x86_64_efi.lds
 
+EFI_SOURCES := $(wildcard $(SOURCE_DIR)/*.c)
+EFI_OBJECTS := $(patsubst $(SOURCE_DIR)/%.c, $(BUILD_DIR)/boot/%.o, $(EFI_SOURCES))
+
 all_bootloader: $(BUILD_DIR)/EFI/BOOT/BOOTX64.EFI
 
 $(BUILD_DIR)/boot/%.o: $(SOURCE_DIR)/%.c
