@@ -51,7 +51,6 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
         status = SystemTable->BootServices->GetMemoryMap(&MemoryMapSize, MemoryMap, &MapKey, &DescriptorSize, &DescriptorVersion);
         if (EFI_ERROR(status)) {
             LOG_ERROR(SystemTable, status, L"BootServices->GetMemoryMap");
-            SystemTable->BootServices->FreePool(MemoryMap);
         }
 
         ExitBootServicesStatus = SystemTable->BootServices->ExitBootServices(ImageHandle, MapKey);
