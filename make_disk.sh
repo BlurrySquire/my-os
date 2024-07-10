@@ -18,14 +18,15 @@ sudo mkfs.fat -F32 ${LOOP_DEVICE}p2 >/dev/null 2>/dev/null
 # Copy the boot files to the boot partition
 sudo mkdir -p /mnt/${LOOP_DEVICE}p1
 sudo mount ${LOOP_DEVICE}p1 /mnt/${LOOP_DEVICE}p1
-sudo cp -r image_root/boot/* -name '.gitkeep' -prune -o -type f /mnt/${LOOP_DEVICE}p1
+sudo rsync -av --exclude='.gitkeep' --no-owner --no-group image_root/boot/ /mnt/${LOOP_DEVICE}p1/ >/dev/null 2>/dev/null
 sudo umount /mnt/${LOOP_DEVICE}p1
 
 # Copy the rootfs files to the rootfs partition
 sudo mkdir -p /mnt/${LOOP_DEVICE}p2
 sudo mount ${LOOP_DEVICE}p2 /mnt/${LOOP_DEVICE}p2
-sudo cp -r image_root/rootfs/* -name '.gitkeep' -prune -o -type f /mnt/${LOOP_DEVICE}p2
+sudo rsync -av --exclude='.gitkeep' --no-owner --no-group image_root/rootfs/ /mnt/${LOOP_DEVICE}p2/ >/dev/null 2>/dev/null
 sudo umount /mnt/${LOOP_DEVICE}p2
+
 
 sudo losetup -d ${LOOP_DEVICE}
 
