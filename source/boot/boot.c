@@ -57,8 +57,6 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
         ExitBootServicesStatus = SystemTable->BootServices->ExitBootServices(ImageHandle, MapKey);
     }
 
-    SystemTable->BootServices->ExitBootServices(ImageHandle, MapKey);
-
     CHAR16* NoOfPages = CHAR_NULL;
     UintToStr(MemoryMap->NumberOfPages, NoOfPages);
     SystemTable->ConOut->OutputString(SystemTable->ConOut, NoOfPages);
