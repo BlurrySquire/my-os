@@ -26,11 +26,14 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"\r\n");
 
     /* Get the memory map */
-    EFI_MEMORY_DESCRIPTOR*      MemoryMap = NULL;
-    UINTN                       MemoryMapSize = 0;
+    EFI_MEMORY_DESCRIPTOR*      MemoryMap;
+    UINTN                       MemoryMapSize;
     UINTN                       MapKey;
     UINTN                       DescriptorSize;
     UINT32                      DescriptorVersion;
+
+    MemoryMapSize = 0;
+    MemoryMap = NULL;
 
     EFI_STATUS status;
 
@@ -46,21 +49,19 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
         LOG_ERROR(SystemTable, status, L"BootServices->AllocatePool");
     }
 
-    EFI_STATUS ExitBootServicesStatus = 0;
-    while (EFI_ERROR(ExitBootServicesStatus) == FALSE) {
-        status = SystemTable->BootServices->GetMemoryMap(&MemoryMapSize, MemoryMap, &MapKey, &DescriptorSize, &DescriptorVersion);
-        if (EFI_ERROR(status)) {
-            LOG_ERROR(SystemTable, status, L"BootServices->GetMemoryMap");
-            SystemTable->BootServices->FreePool(MemoryMap);
-        }
-
-        ExitBootServicesStatus = SystemTable->BootServices->ExitBootServices(ImageHandle, MapKey);
+    status = SystemTable->BootServices->GetMemoryMap(&MemoryMapSize, MemoryMap, &MapKey, &DescriptorSize, &DescriptorVersion);
+    if (EFI_ERROR(status)) {
+        LOG_ERROR(SystemTable, status, L"BootServices->GetMemoryMap");
+        SystemTable->BootServices->FreePool(MemoryMap);
     }
 
     CHAR16* NoOfPages = CHAR_NULL;
     UintToStr(MemoryMap->NumberOfPages, NoOfPages);
     SystemTable->ConOut->OutputString(SystemTable->ConOut, NoOfPages);
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"\r\n");
+
+    /* Exit boot services before booting kernel */
+    SystemTable->BootServices->ExitBootServices(ImageHandle, MapKey);
 
     while (TRUE) {
         /* Hang the system. */
