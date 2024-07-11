@@ -2,68 +2,74 @@
 
 #include "format.h"
 
-#define LOG_ERROR(SystemTable, status, fun_name) \
+EFI_SYSTEM_TABLE*       ST;
+EFI_BOOT_SERVICES*      BS;
+EFI_RUNTIME_SERVICES*   RS;
+
+#define LOG_ERROR(status, fun_name) \
     status &= 0x7FFFFFFFFFFFFFFF; \
     CHAR16* error_code = CHAR_NULL; \
     UintToStr(status, error_code); \
-    SystemTable->ConOut->OutputString(SystemTable->ConOut, L"[ERROR]: "); \
-    SystemTable->ConOut->OutputString(SystemTable->ConOut, fun_name); \
-    SystemTable->ConOut->OutputString(SystemTable->ConOut, L": "); \
-    SystemTable->ConOut->OutputString(SystemTable->ConOut, error_code); \
-    SystemTable->ConOut->OutputString(SystemTable->ConOut, L"\r\n");
+    ST->ConOut->OutputString(ST->ConOut, L"[ERROR]: "); \
+    ST->ConOut->OutputString(ST->ConOut, fun_name); \
+    ST->ConOut->OutputString(ST->ConOut, L": "); \
+    ST->ConOut->OutputString(ST->ConOut, error_code); \
+    ST->ConOut->OutputString(ST->ConOut, L"\r\n");
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
-    SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
-    SystemTable->ConOut->EnableCursor(SystemTable->ConOut, TRUE);
-    SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Hello, UEFI!\r\n");
+    ST = SystemTable;
+    BS = SystemTable->BootServices;
+    RS = SystemTable->RuntimeServices;
+
+    /* Init console */
+    ST->ConOut->ClearScreen(ST->ConOut);
+    ST->ConOut->EnableCursor(ST->ConOut, TRUE);
+    ST->ConOut->OutputString(ST->ConOut, L"Hello, UEFI!\r\n");
 
     CHAR16* FirmwareVersion = CHAR_NULL;
-    UintToStr(SystemTable->FirmwareRevision, FirmwareVersion);
-    SystemTable->ConOut->OutputString(SystemTable->ConOut, SystemTable->FirmwareVendor);
-    SystemTable->ConOut->OutputString(SystemTable->ConOut, L" ");
-    SystemTable->ConOut->OutputString(SystemTable->ConOut, FirmwareVersion);
-    SystemTable->ConOut->OutputString(SystemTable->ConOut, L"\r\n");
+    UintToStr(ST->FirmwareRevision, FirmwareVersion);
+    ST->ConOut->OutputString(ST->ConOut, ST->FirmwareVendor);
+    ST->ConOut->OutputString(ST->ConOut, L" ");
+    ST->ConOut->OutputString(ST->ConOut, FirmwareVersion);
+    ST->ConOut->OutputString(ST->ConOut, L"\r\n");
 
-    // Get the memory map.
-    EFI_MEMORY_DESCRIPTOR*      MemoryMap = NULL;
-    UINTN                       MemoryMapSize = 0;
+    /* Get the memory map */
+    EFI_MEMORY_DESCRIPTOR*      MemoryMap;
+    UINTN                       MemoryMapSize;
     UINTN                       MapKey;
     UINTN                       DescriptorSize;
     UINT32                      DescriptorVersion;
 
+    MemoryMapSize = 0;
+    MemoryMap = NULL;
+
     EFI_STATUS status;
 
-    status = SystemTable->BootServices->GetMemoryMap(&MemoryMapSize, MemoryMap, NULL, &DescriptorSize, NULL);
+    status = BS->GetMemoryMap(&MemoryMapSize, MemoryMap, NULL, &DescriptorSize, NULL);
     if (EFI_ERROR(status)) {
-        LOG_ERROR(SystemTable, status, L"BootServices->GetMemoryMap");
+        LOG_ERROR(status, L"BootServices->GetMemoryMap");
     }
 
-    MemoryMapSize += DescriptorSize * 4;
+    MemoryMapSize += DescriptorSize * 2;
 
-    status = SystemTable->BootServices->AllocatePool(EfiLoaderData, MemoryMapSize, (void **)&MemoryMap);
+    status = BS->AllocatePool(EfiLoaderData, MemoryMapSize, (void **)&MemoryMap);
     if (EFI_ERROR(status)) {
-        LOG_ERROR(SystemTable, status, L"BootServices->AllocatePool");
+        LOG_ERROR(status, L"BootServices->AllocatePool");
     }
 
-    status = SystemTable->BootServices->GetMemoryMap(&MemoryMapSize, MemoryMap, &MapKey, &DescriptorSize, &DescriptorVersion);
+    status = BS->GetMemoryMap(&MemoryMapSize, MemoryMap, &MapKey, &DescriptorSize, &DescriptorVersion);
     if (EFI_ERROR(status)) {
-        LOG_ERROR(SystemTable, status, L"BootServices->GetMemoryMap");
+        LOG_ERROR(status, L"BootServices->GetMemoryMap");
+        BS->FreePool(MemoryMap);
     }
-
-    UINTN NumberOfPages = 0;
-    EFI_MEMORY_DESCRIPTOR* MemoryMapEntry = MemoryMap;
-    do {
-        if (MemoryMapEntry->Type != EfiReservedMemoryType) {
-            NumberOfPages += MemoryMapEntry->NumberOfPages;
-        }
-
-        MemoryMapEntry = NextMemoryDescriptor(MemoryMapEntry, DescriptorSize);
-    } while ((UINT8*)MemoryMapEntry < (UINT8*)MemoryMap + MemoryMapSize);
 
     CHAR16* NoOfPages = CHAR_NULL;
-    UintToStr(NumberOfPages, NoOfPages);
-    SystemTable->ConOut->OutputString(SystemTable->ConOut, NoOfPages);
-    SystemTable->ConOut->OutputString(SystemTable->ConOut, L"\r\n");
+    UintToStr(MemoryMap->NumberOfPages, NoOfPages);
+    ST->ConOut->OutputString(SystemTable->ConOut, NoOfPages);
+    ST->ConOut->OutputString(SystemTable->ConOut, L"\r\n");
+
+    /* Exit boot services before booting kernel */
+    BS->ExitBootServices(ImageHandle, MapKey);
 
     while (TRUE) {
         /* Hang the system. */
@@ -75,5 +81,5 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
         the system.
     */
 
-    SystemTable->RuntimeServices->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, L"\0");
+    RS->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, L"\0");
 }
