@@ -13,7 +13,6 @@
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"\r\n");
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
-    /* Init console */
     SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
     SystemTable->ConOut->EnableCursor(SystemTable->ConOut, TRUE);
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"Hello, UEFI!\r\n");
@@ -25,15 +24,12 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
     SystemTable->ConOut->OutputString(SystemTable->ConOut, FirmwareVersion);
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"\r\n");
 
-    /* Get the memory map */
-    EFI_MEMORY_DESCRIPTOR*      MemoryMap;
-    UINTN                       MemoryMapSize;
+    // Get the memory map.
+    EFI_MEMORY_DESCRIPTOR*      MemoryMap = NULL;
+    UINTN                       MemoryMapSize = 0;
     UINTN                       MapKey;
     UINTN                       DescriptorSize;
     UINT32                      DescriptorVersion;
-
-    MemoryMapSize = 0;
-    MemoryMap = NULL;
 
     EFI_STATUS status;
 
@@ -42,7 +38,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
         LOG_ERROR(SystemTable, status, L"BootServices->GetMemoryMap");
     }
 
-    MemoryMapSize += DescriptorSize * 2;
+    MemoryMapSize += DescriptorSize * 4;
 
     status = SystemTable->BootServices->AllocatePool(EfiLoaderData, MemoryMapSize, (void **)&MemoryMap);
     if (EFI_ERROR(status)) {
@@ -52,16 +48,22 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
     status = SystemTable->BootServices->GetMemoryMap(&MemoryMapSize, MemoryMap, &MapKey, &DescriptorSize, &DescriptorVersion);
     if (EFI_ERROR(status)) {
         LOG_ERROR(SystemTable, status, L"BootServices->GetMemoryMap");
-        SystemTable->BootServices->FreePool(MemoryMap);
     }
 
+    UINTN NumberOfPages = 0;
+    EFI_MEMORY_DESCRIPTOR* MemoryMapEntry = MemoryMap;
+    do {
+        if (MemoryMapEntry->Type != EfiReservedMemoryType) {
+            NumberOfPages += MemoryMapEntry->NumberOfPages;
+        }
+
+        MemoryMapEntry = NextMemoryDescriptor(MemoryMapEntry, DescriptorSize);
+    } while ((UINT8*)MemoryMapEntry < (UINT8*)MemoryMap + MemoryMapSize);
+
     CHAR16* NoOfPages = CHAR_NULL;
-    UintToStr(MemoryMap->NumberOfPages, NoOfPages);
+    UintToStr(NumberOfPages, NoOfPages);
     SystemTable->ConOut->OutputString(SystemTable->ConOut, NoOfPages);
     SystemTable->ConOut->OutputString(SystemTable->ConOut, L"\r\n");
-
-    /* Exit boot services before booting kernel */
-    SystemTable->BootServices->ExitBootServices(ImageHandle, MapKey);
 
     while (TRUE) {
         /* Hang the system. */
