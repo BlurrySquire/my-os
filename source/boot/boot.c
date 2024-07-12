@@ -66,10 +66,20 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
         BS->FreePool(MemoryMap);
     }
 
+    UINTN NumberOfPages = 0;
+    EFI_MEMORY_DESCRIPTOR* MemoryMapEntry = MemoryMap;
+    do {
+        if (MemoryMapEntry->Type != EfiReservedMemoryType) {
+            NumberOfPages += MemoryMapEntry->NumberOfPages;
+        }
+
+        MemoryMapEntry = NextMemoryDescriptor(MemoryMapEntry, DescriptorSize);
+    } while ((UINT8*)MemoryMapEntry < (UINT8*)MemoryMap + MemoryMapSize);
+
     CHAR16* NoOfPages = CHAR_NULL;
-    UintToStr(MemoryMap->NumberOfPages, NoOfPages);
-    ST->ConOut->OutputString(SystemTable->ConOut, NoOfPages);
-    ST->ConOut->OutputString(SystemTable->ConOut, L"\r\n");
+    UintToStr(NumberOfPages, NoOfPages);
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, NoOfPages);
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, L"\r\n");
 
     /* Exit boot services before booting kernel */
     BS->ExitBootServices(ImageHandle, MapKey);
