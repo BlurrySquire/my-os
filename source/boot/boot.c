@@ -2,10 +2,6 @@
 
 #include "format.h"
 
-EFI_SYSTEM_TABLE*       ST;
-EFI_BOOT_SERVICES*      BS;
-EFI_RUNTIME_SERVICES*   RS;
-
 #define LOG_ERROR(status, fun_name) \
     status &= 0x7FFFFFFFFFFFFFFF; \
     CHAR16* error_code = CHAR_NULL; \
@@ -17,9 +13,9 @@ EFI_RUNTIME_SERVICES*   RS;
     ST->ConOut->OutputString(ST->ConOut, L"\r\n");
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable) {
-    ST = SystemTable;
-    BS = SystemTable->BootServices;
-    RS = SystemTable->RuntimeServices;
+    EFI_SYSTEM_TABLE*       ST = SystemTable;
+    EFI_BOOT_SERVICES*      BS = SystemTable->BootServices;
+    EFI_RUNTIME_SERVICES*   RS = SystemTable->RuntimeServices;
 
     /* Init console */
     ST->ConOut->ClearScreen(ST->ConOut);
